@@ -1,0 +1,68 @@
+CREATE DATABASE IF NOT EXISTS SistemaCompraVenta;
+USE SistemaCompraVenta;
+
+-- Tabla de usuarios
+CREATE TABLE Usuarios (
+    UsuarioID INT AUTO_INCREMENT PRIMARY KEY,
+    Nombre VARCHAR(50),
+    ApellidoPaterno VARCHAR(50),
+    ApellidoMaterno VARCHAR(50),
+    FechaNacimiento DATE,
+    NumeroTelefonico VARCHAR(20),
+    Direccion VARCHAR(255),
+    Email VARCHAR(100) UNIQUE,
+    Contraseña VARCHAR(255),
+    Tipo ENUM('Comprador', 'Vendedor', 'Administrador') NOT NULL
+);
+
+-- Tabla de inmuebles
+CREATE TABLE Inmuebles (
+    InmuebleID INT AUTO_INCREMENT PRIMARY KEY,
+    UsuarioID INT,
+    Tipo ENUM('Casa', 'Departamento', 'Oficina', 'Otro'),
+    Ubicacion VARCHAR(255),
+    Precio DECIMAL(10, 2),
+    NumeroEstacionamientos INT,
+    NumeroRecamaras INT,
+    NumeroBaños INT,
+    Superficie DECIMAL(10, 2),
+    Antiguedad INT,
+    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID)
+);
+
+-- Tabla de automóviles
+CREATE TABLE Automoviles (
+    AutoID INT AUTO_INCREMENT PRIMARY KEY,
+    UsuarioID INT,
+    Marca VARCHAR(50),
+    Modelo VARCHAR(50),
+    Año INT,
+    Precio DECIMAL(10, 2),
+    Kilometraje INT,
+    Ubicacion VARCHAR(255),
+    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID)
+);
+
+-- Tabla de ofertas
+CREATE TABLE Ofertas (
+    OfertaID INT AUTO_INCREMENT PRIMARY KEY,
+    InmuebleID INT,
+    AutoID INT,
+    UsuarioID INT,
+    PrecioOfrecido DECIMAL(10, 2),
+    Condiciones TEXT,
+    Estado ENUM('Aceptada', 'Rechazada', 'Pendiente') NOT NULL,
+    FechaOferta DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (InmuebleID) REFERENCES Inmuebles(InmuebleID),
+    FOREIGN KEY (AutoID) REFERENCES Automoviles(AutoID),
+    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID)
+);
+
+-- Tabla de sesiones (para controlar sesiones de usuario)
+CREATE TABLE Sesiones (
+    SesionID INT AUTO_INCREMENT PRIMARY KEY,
+    UsuarioID INT,
+    FechaInicio DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FechaFin DATETIME,
+    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID)
+);

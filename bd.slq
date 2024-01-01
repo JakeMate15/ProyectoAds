@@ -1,68 +1,166 @@
-CREATE DATABASE IF NOT EXISTS SistemaCompraVenta;
-USE SistemaCompraVenta;
+-- Creación de la base de datos
+CREATE DATABASE IF NOT EXISTS SistemaVentaInmuebles;
 
--- Tabla de usuarios
-CREATE TABLE Usuarios (
-    UsuarioID INT AUTO_INCREMENT PRIMARY KEY,
-    Nombre VARCHAR(50),
-    ApellidoPaterno VARCHAR(50),
-    ApellidoMaterno VARCHAR(50),
-    FechaNacimiento DATE,
-    NumeroTelefonico VARCHAR(20),
-    Direccion VARCHAR(255),
-    Email VARCHAR(100) UNIQUE,
-    Contraseña VARCHAR(255),
-    Tipo ENUM('Comprador', 'Vendedor', 'Administrador') NOT NULL
+-- Uso de la base de datos
+USE SistemaVentaInmuebles;
+
+-- Tabla de Usuarios
+CREATE TABLE IF NOT EXISTS Usuarios (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(255),
+    apellido VARCHAR(255),
+    email VARCHAR(255) UNIQUE,
+    contrasena VARCHAR(255),
+    telefono VARCHAR(20),
+    direccion VARCHAR(255),
+    es_admin BOOLEAN DEFAULT FALSE,
+    rol ENUM('administrador', 'vendedor', 'comprador') DEFAULT 'comprador',
+    reputacion DECIMAL(3,2) DEFAULT 0
 );
 
--- Tabla de inmuebles
-CREATE TABLE Inmuebles (
-    InmuebleID INT AUTO_INCREMENT PRIMARY KEY,
-    UsuarioID INT,
-    Tipo ENUM('Casa', 'Departamento', 'Oficina', 'Otro'),
-    Ubicacion VARCHAR(255),
-    Precio DECIMAL(10, 2),
-    NumeroEstacionamientos INT,
-    NumeroRecamaras INT,
-    NumeroBaños INT,
-    Superficie DECIMAL(10, 2),
-    Antiguedad INT,
-    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID)
+-- Tabla de Anuncios
+CREATE TABLE IF NOT EXISTS Anuncios (
+    id_anuncio INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT,
+    tipo ENUM('inmueble', 'automovil'),
+    titulo VARCHAR(255),
+    descripcion TEXT,
+    precio DECIMAL(10, 2),
+    fecha_publicacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario)
 );
 
--- Tabla de automóviles
-CREATE TABLE Automoviles (
-    AutoID INT AUTO_INCREMENT PRIMARY KEY,
-    UsuarioID INT,
-    Marca VARCHAR(50),
-    Modelo VARCHAR(50),
-    Año INT,
-    Precio DECIMAL(10, 2),
-    Kilometraje INT,
-    Ubicacion VARCHAR(255),
-    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID)
+-- Tabla para Inmuebles (extensión de Anuncios)
+CREATE TABLE IF NOT EXISTS Inmuebles (
+    id_anuncio INT PRIMARY KEY,
+    num_recamaras INT,
+    num_banos INT,
+    superficie DECIMAL(10, 2),
+    antiguedad INT,
+    num_estacionamientos INT,
+    FOREIGN KEY (id_anuncio) REFERENCES Anuncios(id_anuncio)
 );
 
--- Tabla de ofertas
-CREATE TABLE Ofertas (
-    OfertaID INT AUTO_INCREMENT PRIMARY KEY,
-    InmuebleID INT,
-    AutoID INT,
-    UsuarioID INT,
-    PrecioOfrecido DECIMAL(10, 2),
-    Condiciones TEXT,
-    Estado ENUM('Aceptada', 'Rechazada', 'Pendiente') NOT NULL,
-    FechaOferta DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (InmuebleID) REFERENCES Inmuebles(InmuebleID),
-    FOREIGN KEY (AutoID) REFERENCES Automoviles(AutoID),
-    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID)
+-- Tabla para Automóviles (extensión de Anuncios)
+CREATE TABLE IF NOT EXISTS Automoviles (
+    id_anuncio INT PRIMARY KEY,
+    marca VARCHAR(255),
+    modelo VARCHAR(255),
+    ano INT,
+    kilometraje INT,
+    FOREIGN KEY (id_anuncio) REFERENCES Anuncios(id_anuncio)
 );
 
--- Tabla de sesiones (para controlar sesiones de usuario)
-CREATE TABLE Sesiones (
-    SesionID INT AUTO_INCREMENT PRIMARY KEY,
-    UsuarioID INT,
-    FechaInicio DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FechaFin DATETIME,
-    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID)
+CREATE TABLE IF NOT EXISTS Negociaciones (
+    id_negociacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_anuncio INT,
+    id_comprador INT,
+    id_vendedor INT,
+    estado ENUM('pendiente', 'aceptada', 'rechazada'),
+    oferta DECIMAL(10, 2),
+    fecha_negociacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_anuncio) REFERENCES Anuncios(id_anuncio),
+    FOREIGN KEY (id_comprador) REFERENCES Usuarios(id_usuario),
+    FOREIGN KEY (id_vendedor) REFERENCES Usuarios(id_usuario)
+);
+
+-- Tabla de Valoraciones
+CREATE TABLE IF NOT EXISTS Valoraciones (
+    id_valoracion INT AUTO_INCREMENT PRIMARY KEY,
+    id_vendedor INT,
+    id_comprador INT,
+    puntuacion INT,
+    comentario TEXT,
+    fecha_valoracion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_vendedor) REFERENCES Usuarios(id_usuario),
+    FOREIGN KEY (id_comprador) REFERENCES Usuarios(id_usuario)
+);
+
+-- Tabla de Métodos de Pago (para usuarios)
+CREATE TABLE IF NOT EXISTS MetodosPago (
+    id_metodo INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT,
+    tipo_metodo ENUM('tarjeta', 'paypal', 'otro'),
+    detalles TEXT,
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario)
+);
+
+-- Tabla de Favoritos (para anuncios)
+CREATE TABLE IF NOT EXISTS Favoritos (
+    id_usuario INT,
+    id_anuncio INT,
+    fecha_agregado DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_usuario, id_anuncio),
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario),
+    FOREIGN KEY (id_anuncio) REFERENCES Anuncios(id_anuncio)
+);
+
+-- Tabla de Notificaciones
+CREATE TABLE IF NOT EXISTS Notificaciones (
+    id_notificacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT,
+    mensaje TEXT,
+    fecha_notificacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    leida BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario)
+);
+
+-- Tabla de Problemas para el Administrador
+CREATE TABLE IF NOT EXISTS Problemas (
+    id_problema INT AUTO_INCREMENT PRIMARY KEY,
+    descripcion TEXT,
+    estado ENUM('pendiente', 'resuelto'),
+    fecha_reporte DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de Preguntas Frecuentes (FAQ)
+CREATE TABLE IF NOT EXISTS FAQ (
+    id_faq INT AUTO_INCREMENT PRIMARY KEY,
+    pregunta TEXT,
+    respuesta TEXT
+);
+
+-- Tabla de Categorías de Problemas
+CREATE TABLE IF NOT EXISTS CategoriasProblemas (
+    id_categoria INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_categoria VARCHAR(255)
+);
+
+-- Relacionar Problemas con Categorías
+ALTER TABLE Problemas
+ADD COLUMN id_categoria INT,
+ADD FOREIGN KEY (id_categoria) REFERENCES CategoriasProblemas(id_categoria);
+
+-- Tabla de Historial de Acciones del Usuario
+CREATE TABLE IF NOT EXISTS HistorialAcciones (
+    id_historial INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT,
+    accion TEXT,
+    fecha_accion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario)
+);
+
+-- Creación de la tabla Mensajes asociada a negociaciones
+CREATE TABLE IF NOT EXISTS Mensajes (
+    id_mensaje INT AUTO_INCREMENT PRIMARY KEY,
+    id_negociacion INT,
+    id_emisor INT,
+    id_receptor INT,
+    mensaje TEXT,
+    fecha_mensaje DATETIME DEFAULT CURRENT_TIMESTAMP,
+    leido BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (id_negociacion) REFERENCES Negociaciones(id_negociacion),
+    FOREIGN KEY (id_emisor) REFERENCES Usuarios(id_usuario),
+    FOREIGN KEY (id_receptor) REFERENCES Usuarios(id_usuario)
+);
+
+-- Tabla de Métodos de Pago de Anuncios (para gestionar pagos de anuncios promocionados)
+CREATE TABLE IF NOT EXISTS PagosAnuncios (
+    id_pago INT AUTO_INCREMENT PRIMARY KEY,
+    id_anuncio INT,
+    id_metodo INT,
+    monto DECIMAL(10, 2),
+    fecha_pago DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_anuncio) REFERENCES Anuncios(id_anuncio),
+    FOREIGN KEY (id_metodo) REFERENCES MetodosPago(id_metodo)
 );
